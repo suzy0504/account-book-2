@@ -11,7 +11,6 @@ const DetailBox = styled.div`
   justify-content: center;
   align-items: center;
   width: 800px;
-  padding: 20px;
   border-radius: 10px;
   flex-direction: column;
   color: white;
