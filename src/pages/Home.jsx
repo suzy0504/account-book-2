@@ -11,10 +11,10 @@ const Main = styled.div`
   margin: 0 auto;
 `;
 
-const Home = () => {
+const Home = ({ user, setSelectedMonth }) => {
   return (
     <Main>
-      <ExpenseContainer />
+      <ExpenseContainer user={user} setSelectedMonth={setSelectedMonth} />
     </Main>
   );
 };

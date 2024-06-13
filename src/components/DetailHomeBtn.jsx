@@ -1,12 +1,14 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { setExpenses } from "../redux/modules/expenses";
+import { useMutation } from "@tanstack/react-query";
+import { deleteExpense } from "../lib/api/expense";
 
 const ButtonBox = styled.div`
   width: 800px;
   display: flex;
   gap: 10px;
+  padding: 10px;
 `;
 
 const Button = styled.button`
@@ -19,27 +21,26 @@ const Button = styled.button`
   }
 `;
 
-const DetailHomeBtn = ({ detailExpense, saveHandle }) => {
-  const dispatch = useDispatch();
-  const expenses = useSelector((state) => state.expenses);
-
+const DetailHomeBtn = ({ saveHandle, id }) => {
   const navigate = useNavigate();
 
   const backBtn = () => {
     navigate(-1);
   };
 
+  const mutationDelete = useMutation({
+    mutationFn: deleteExpense,
+    onSuccess: () => {
+      navigate("/");
+    },
+  });
+
   const removeHandle = () => {
     const shouldDelete = window.confirm(
       "정말로 이 지출 항목을 삭제하시겠습니까?"
     );
     if (shouldDelete) {
-      const newExpenses = expenses.filter(
-        (expense) => expense.id !== detailExpense.id
-      );
-      dispatch(setExpenses(newExpenses));
-      console.log(newExpenses);
-      navigate(-1);
+      mutationDelete.mutate(id);
     }
   };
 

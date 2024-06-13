@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import DetailHomeBtn from "../components/DetailHomeBtn";
-import { useDispatch, useSelector } from "react-redux";
-import { setExpenses } from "../redux/modules/expenses";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getExpense, putExpense } from "../lib/api/expense";
 
 const DetailBox = styled.div`
   background-color: #be6674;
@@ -13,7 +13,7 @@ const DetailBox = styled.div`
   width: 800px;
   border-radius: 10px;
   flex-direction: column;
-  color: white;
+  padding: 10px;
 `;
 
 const DetailSmallBox = styled.div`
@@ -24,14 +24,41 @@ const DetailSmallBox = styled.div`
 `;
 
 const DetailHome = () => {
-  const dispatch = useDispatch();
-  const expenses = useSelector((state) => state.expenses);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const param = useParams();
+  const {
+    data: detailExpense = {},
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["expense", id],
+    queryFn: getExpense,
+    enabled: !!id,
+  });
 
-  const detailExpense = expenses.find((expense) => expense.id === param.id);
+  const mutationEdit = useMutation({
+    mutationFn: putExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["expenses"]);
+      navigate("/");
+    },
+  });
 
-  const [editedExpense, setEditedExpense] = useState({ ...detailExpense });
+  const [date, setDate] = useState("");
+  const [item, setItem] = useState("");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (detailExpense) {
+      setDate(detailExpense.date || "");
+      setItem(detailExpense.item || "");
+      setAmount(detailExpense.amount || "");
+      setDescription(detailExpense.description || "");
+    }
+  }, [detailExpense]);
 
   const expensesChange = (e) => {
     const { name, value } = e.target;
@@ -39,10 +66,22 @@ const DetailHome = () => {
       alert("금액란에는 숫자만 입력하세요.");
       return;
     }
-    setEditedExpense((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    switch (name) {
+      case "date":
+        setDate(value);
+        break;
+      case "item":
+        setItem(value);
+        break;
+      case "amount":
+        setAmount(value);
+        break;
+      case "description":
+        setDescription(value);
+        break;
+      default:
+        break;
+    }
   };
 
   const numberCheck = (value) => {
@@ -50,23 +89,35 @@ const DetailHome = () => {
   };
 
   const saveHandle = () => {
-    const newExpenses = expenses.map((expense) =>
-      expense.id === detailExpense.id ? editedExpense : expense
-    );
-    dispatch(setExpenses(newExpenses));
-    console.log(newExpenses);
+    const updatedExpense = {
+      id,
+      date,
+      item,
+      amount: parseInt(amount, 10),
+      description,
+    };
+    mutationEdit.mutate(updatedExpense);
   };
 
-  if (!detailExpense) {
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div>오류가 발생했습니다: {error.message}</div>;
+  }
+
+  if (!detailExpense.id) {
     return <div>해당 지출 내역을 찾을 수 없습니다.</div>;
   }
+
   return (
     <DetailBox>
       <DetailSmallBox>
         <label>날짜</label>
         <input
           type="date"
-          defaultValue={detailExpense.date}
+          defaultValue={date}
           onChange={expensesChange}
           name="date"
         />
@@ -75,7 +126,7 @@ const DetailHome = () => {
         <label>항목</label>
         <input
           type="text"
-          defaultValue={detailExpense.item}
+          defaultValue={item}
           onChange={expensesChange}
           name="item"
         />
@@ -84,7 +135,7 @@ const DetailHome = () => {
         <label>금액</label>
         <input
           type="number"
-          defaultValue={detailExpense.amount}
+          defaultValue={amount}
           onChange={expensesChange}
           name="amount"
         />
@@ -93,13 +144,17 @@ const DetailHome = () => {
         <label>내용</label>
         <input
           type="text"
-          defaultValue={detailExpense.description}
+          defaultValue={description}
           onChange={expensesChange}
           name="description"
         />
       </DetailSmallBox>
       <div>
-        <DetailHomeBtn detailExpense={detailExpense} saveHandle={saveHandle} />
+        <DetailHomeBtn
+          detailExpense={detailExpense}
+          saveHandle={saveHandle}
+          id={id}
+        />
       </div>
     </DetailBox>
   );

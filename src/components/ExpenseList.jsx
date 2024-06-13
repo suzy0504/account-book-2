@@ -1,28 +1,37 @@
 import React, { useEffect, useState } from "react";
 import ExpenseItem from "./ExpenseItem";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
+import { getExpenses } from "../lib/api/expense";
 
-const ExpenseList = () => {
-  const expenses = useSelector((state) => state.expenses);
+const ExpenseList = ({ selectedMonth }) => {
+  const {
+    data: expenses = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["expense"],
+    queryFn: getExpenses,
+  });
 
-  const selectedMonth = useSelector(
-    (state) => state.selectedMonth.selectedMonth
-  );
-
-  const [filterList, setFilterData] = useState([]);
+  const [filterList, setFilterList] = useState([]);
 
   useEffect(() => {
+    let filtered = [];
     if (selectedMonth) {
-      const month = selectedMonth.slice(0, -1);
-      const filtered = expenses.filter(
-        (expense) => new Date(expense.date).getMonth() + 1 === parseInt(month)
+      const monthNumber = parseInt(selectedMonth.slice(0, -1));
+      filtered = expenses.filter(
+        (expense) => new Date(expense.date).getMonth() + 1 === monthNumber
       );
-      setFilterData(filtered);
     } else {
-      setFilterData([]);
+      filtered = expenses;
     }
+
+    setFilterList(filtered);
   }, [expenses, selectedMonth]);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div>

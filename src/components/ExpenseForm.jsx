@@ -1,12 +1,14 @@
 import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
-import { setExpenses } from "../redux/modules/expenses";
+import { QueryClient, useMutation } from "@tanstack/react-query";
+import { postExpense } from "../lib/api/expense";
+import { useNavigate } from "react-router-dom";
 
 const FormBox = styled.div`
   background-color: #be6674;
   display: flex;
   border-radius: 10px;
-  color: white;
+  color: black;
   font-size: 20px;
   padding: 20px;
 `;
@@ -42,9 +44,18 @@ const ButtonStyle = styled.button`
   }
 `;
 
-const ExpenseForm = () => {
-  const dispatch = useDispatch();
-  const expenses = useSelector((state) => state.expenses);
+const ExpenseForm = ({ user }) => {
+  const navigate = useNavigate();
+
+  const queryClient = new QueryClient();
+
+  const mutation = useMutation({
+    mutationFn: postExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["expenses"]);
+      navigate(0);
+    },
+  });
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -61,16 +72,16 @@ const ExpenseForm = () => {
     if (!amount.trim()) return alert("금액을 입력해주세요");
     if (!description.trim()) return alert("내용을 입력해주세요");
 
-    const nextExpense = {
+    const newExpenses = {
       id: crypto.randomUUID(),
       date,
       item,
       amount,
       description,
+      createBy: user.userId,
     };
 
-    dispatch(setExpenses([...expenses, nextExpense]));
-
+    mutation.mutate(newExpenses);
     e.target.reset();
   };
 

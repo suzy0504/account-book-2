@@ -1,6 +1,5 @@
 import styled, { css } from "styled-components";
-import { useDispatch, useSelector } from "react-redux";
-import { setSelectedMonth } from "../redux/modules/selectedMonth";
+import { useState } from "react";
 
 const MonthBox = styled.div`
   background-color: #bb8c94;
@@ -34,15 +33,12 @@ const Button = styled.button`
     `}
 `;
 
-const Month = () => {
-  const dispatch = useDispatch();
-
-  const selectedMonth = useSelector(
-    (state) => state.selectedMonth.selectedMonth
-  );
+const Month = ({ setSelectedMonth }) => {
+  const [selectedMonth, setSelectedMonthLocal] = useState("");
 
   const handleMonthClick = (month) => {
-    dispatch(setSelectedMonth(month));
+    setSelectedMonthLocal(month);
+    setSelectedMonth(month); // 선택된 월을 부모 컴포넌트로 전달
   };
 
   return (
@@ -74,4 +70,5 @@ const Month = () => {
     </div>
   );
 };
+
 export default Month;

@@ -18,7 +18,7 @@ export const register = async ({ id, password, nickname }) => {
 
 export const login = async ({ id, password }) => {
   try {
-    const response = await axios.post(AUTH_API_HOST + "/login?expiresIn=10m", {
+    const response = await axios.post(AUTH_API_HOST + "/login?expiresIn=30m", {
       id: id,
       password: password,
     });
@@ -40,8 +40,24 @@ export const getUserInfo = async () => {
         },
       });
       return response.data;
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      alert("AccessToken 이 만료되었습니다.");
+      localStorage.clear();
     }
+  }
+};
+
+export const updateProfile = async (formData) => {
+  const accessToken = localStorage.getItem("accessToken");
+  if (accessToken) {
+    try {
+      const response = await axios.patch(AUTH_API_HOST + "/profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      return response.data;
+    } catch (err) {}
   }
 };

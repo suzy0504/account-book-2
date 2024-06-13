@@ -1,26 +1,17 @@
 import ExpenseForm from "./ExpenseForm";
 import ExpenseList from "./ExpenseList";
-import styled from "styled-components";
 import Month from "./Month";
+import { useState } from "react";
 
-const ItemBox = styled.div`
-  background-color: #e8b19d;
-  padding: 20px 20px 10px 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  margin-top: 20px;
-`;
-
-const ExpenseContainer = () => {
+const ExpenseContainer = ({ user }) => {
+  const [selectedMonth, setSelectedMonth] = useState("");
   return (
     <div>
-      <ExpenseForm />
-      <Month />
-      <ItemBox>
-        <ExpenseList />
-      </ItemBox>
+      <ExpenseForm user={user} />
+      <Month setSelectedMonth={setSelectedMonth} />
+      <div className="bg-nude p-5 rounded-lg flex flex-col items-center mt-5">
+        <ExpenseList selectedMonth={selectedMonth} />
+      </div>
     </div>
   );
 };
